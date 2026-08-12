@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chromebook Check-Out Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --chalk:#2C4A3E;
+    --chalk-light:#3F6657;
+    --tan:#E8D9B5;
+    --tan-dark:#D2BB8B;
+    --cream:#FAF6EC;
+    --red:#C1432F;
+    --amber:#B9842A;
+    --navy:#1B2A3A;
+    --sage:#6F9379;
+    --sage-light:#D7E2D9;
+    --white:#FFFFFF;
+    --radius:10px;
+    --shadow:0 2px 10px rgba(27,42,58,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--cream);
+    color:var(--navy);
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:960px;margin:0 auto;}
+  header.top{background:var(--chalk);color:var(--cream);padding:26px 24px 0;border-bottom:6px solid var(--tan-dark);}
+  .top-inner{max-width:960px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px;padding-bottom:18px;}
+  .brand h1{font-family:'Space Mono',monospace;font-size:1.5rem;letter-spacing:0.03em;text-transform:uppercase;margin:0 0 6px;}
+  .brand p{margin:0;font-size:0.9rem;color:var(--sage-light);max-width:480px;}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;}
+  .stat-pill{background:var(--tan);color:var(--navy);font-family:'Space Mono',monospace;font-size:0.74rem;padding:6px 11px;border-radius:20px;white-space:nowrap;}
+  .stat-pill b{font-size:0.95rem;}
+  .stat-pill.warn{background:var(--red);color:var(--cream);}
+
+  nav.tabs{display:flex;gap:4px;max-width:960px;margin:0 auto;padding:0 24px;overflow-x:auto;}
+  nav.tabs button{
+    font-family:'Space Mono',monospace;font-size:0.76rem;text-transform:uppercase;letter-spacing:0.03em;
+    background:var(--tan);color:var(--navy);border:none;padding:11px 16px;border-radius:9px 9px 0 0;
+    cursor:pointer;white-space:nowrap;transform:translateY(4px);transition:transform .15s ease, background .15s ease;
+  }
+  nav.tabs button.active{background:var(--cream);transform:translateY(0);font-weight:700;box-shadow:var(--shadow);}
+  nav.tabs button:hover{transform:translateY(0);}
+  nav.tabs button:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{outline:2px solid var(--chalk);outline-offset:2px;}
+
+  main{padding:22px 24px 60px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .card{background:var(--white);border:1px solid var(--sage-light);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
+
+  label{display:block;font-size:0.8rem;font-weight:600;margin-bottom:6px;color:var(--chalk);}
+  input[type=text],input[type=search],select,textarea{
+    width:100%;padding:10px 12px;border:1.5px solid var(--sage-light);border-radius:8px;
+    font-family:'Inter',sans-serif;font-size:0.95rem;background:var(--cream);color:var(--navy);
+  }
+  textarea{font-family:'Inter',sans-serif;resize:vertical;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--chalk);}
+
+  button.primary{background:var(--chalk);color:var(--cream);border:none;padding:10px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.92rem;}
+  button.primary:hover{background:var(--chalk-light);}
+  button.secondary{background:transparent;border:1.5px solid var(--chalk);color:var(--chalk);padding:8px 15px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.86rem;}
+  button.danger{background:transparent;border:1.5px solid var(--red);color:var(--red);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;}
+  button.link{background:none;border:none;color:var(--chalk);text-decoration:underline;cursor:pointer;font-size:0.85rem;padding:0;}
+
+  .results-list{margin-top:8px;display:flex;flex-direction:column;gap:6px;}
+  .result-item{text-align:left;background:var(--cream);border:1px solid var(--sage-light);border-radius:8px;padding:10px 12px;cursor:pointer;font-size:0.92rem;}
+  .result-item:hover{border-color:var(--chalk);}
+
+  .selected-student{display:flex;justify-content:space-between;align-items:center;background:var(--sage-light);border-radius:8px;padding:10px 14px;margin-bottom:14px;gap:10px;}
+  .selected-student strong{font-size:1.02rem;}
+
+  .warning-banner{background:#FBEDE8;border:1.5px solid var(--red);color:var(--red);padding:9px 12px;border-radius:8px;font-size:0.83rem;margin-bottom:12px;}
+
+  .feed{display:flex;flex-direction:column;gap:12px;margin-top:6px;}
+  .feed-card{position:relative;background:var(--white);border:1px solid var(--sage-light);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);transition:transform .15s ease;}
+  .feed-card:nth-child(odd){transform:rotate(-0.5deg);}
+  .feed-card:nth-child(even){transform:rotate(0.5deg);}
+  .feed-card:hover{transform:rotate(0deg);}
+  .feed-card .name{font-weight:700;font-size:1rem;padding-right:90px;}
+  .feed-card .meta{font-size:0.82rem;color:#5b6b63;margin-top:2px;padding-right:90px;}
+
+  .stamp{position:absolute;top:14px;right:16px;font-family:'Space Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;border:2px solid currentColor;border-radius:4px;padding:3px 8px;transform:rotate(-7deg);}
+  .stamp.out{color:var(--chalk);}
+  .stamp.in{color:var(--sage);}
+  .stamp.warn{color:var(--amber);}
+  @keyframes stampIn{0%{transform:rotate(-7deg) scale(2.4);opacity:0;}55%{transform:rotate(-7deg) scale(0.85);opacity:1;}100%{transform:rotate(-7deg) scale(1);opacity:1;}}
+  .stamp.animate{animation:stampIn .4s cubic-bezier(.2,.8,.3,1.2);}
+
+  table{width:100%;border-collapse:collapse;font-size:0.89rem;}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--sage-light);}
+  th{font-family:'Space Mono',monospace;font-size:0.7rem;text-transform:uppercase;color:var(--chalk);letter-spacing:0.03em;}
+  tr.expanded-row td{background:var(--cream);}
+
+  .empty-state{text-align:center;padding:30px 18px;color:#5b6b63;}
+  .empty-stamp{display:inline-block;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.06em;font-size:1.02rem;border:3px solid var(--sage);color:var(--sage);padding:9px 20px;border-radius:8px;transform:rotate(-4deg);margin-bottom:10px;}
+
+  .section-title{font-family:'Space Mono',monospace;text-transform:uppercase;font-size:0.78rem;letter-spacing:0.04em;color:var(--chalk);margin:22px 0 10px;}
+
+  footer.app-footer{max-width:960px;margin:10px auto 30px;padding:0 24px;font-size:0.76rem;color:#7c8a82;text-align:center;}
+
+  @media (max-width:600px){
+    main{padding:16px 16px 60px;}
+    .top-inner{padding-bottom:14px;}
+    nav.tabs{padding:0 16px;}
+    .feed-card .name, .feed-card .meta{padding-right:78px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="top-inner">
+      <div class="brand">
+        <h1>Chromebook Check-Out Desk</h1>
+        <p>Search a name to sign a device out, scan it back in at the end of the day.</p>
+      </div>
+      <div class="stats" id="statsRow"></div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="checkout" type="button">Check Out</button>
+    <button class="tab-btn" data-tab="checkin" type="button">Check In</button>
+    <button class="tab-btn" data-tab="report" type="button">End of Day</button>
+    <button class="tab-btn" data-tab="students" type="button">Students</button>
+  </nav>
+
+  <main>
+    <div id="loadingNote" class="card" style="text-align:center;">Loading saved data…</div>
+
+    <section class="panel active" id="panel-checkout">
+      <div class="card">
+        <label for="studentSearch">Find student</label>
+        <input type="search" id="studentSearch" placeholder="Start typing a name…" autocomplete="off">
+        <div class="results-list" id="studentResults"></div>
+
+        <div id="selectedStudentBlock" style="display:none;">
+          <div class="selected-student">
+            <strong id="selectedStudentName"></strong>
+            <button class="link" id="changeStudentBtn" type="button">Change</button>
+          </div>
+          <div id="alreadyOutWarning" class="warning-banner" style="display:none;"></div>
+
+          <label for="deviceInput">Scan or type the chromebook ID</label>
+          <input type="text" id="deviceInput" placeholder="e.g. Pink 1 or 17854" autocomplete="off">
+
+          <label for="reasonSelect" style="margin-top:14px;">Reason for borrowing</label>
+          <select id="reasonSelect">
+            <option value="Forgot own device">Forgot own device</option>
+            <option value="Device charging or broken">Device charging or broken</option>
+            <option value="No personal device">No personal device</option>
+            <option value="other">Other…</option>
+          </select>
+          <input type="text" id="otherReasonInput" placeholder="Specify reason" style="display:none;margin-top:8px;">
+
+          <button class="primary" id="confirmCheckoutBtn" type="button" style="margin-top:14px;">Check Out Device</button>
+        </div>
+      </div>
+
+      <div class="section-title">Checked out today</div>
+      <div class="feed" id="checkoutFeed"></div>
+    </section>
+
+    <section class="panel" id="panel-checkin">
+      <div class="card">
+        <label for="returnScan">Scan or type the returned device</label>
+        <input type="text" id="returnScan" placeholder="e.g. Pink 1 or 17854" autocomplete="off">
+        <button class="primary" id="confirmReturnBtn" type="button" style="margin-top:12px;">Check In Device</button>
+      </div>
+      <div class="section-title">Returned today</div>
+      <div class="feed" id="checkinFeed"></div>
+    </section>
+
+    <section class="panel" id="panel-report">
+      <div id="reportContent"></div>
+    </section>
+
+    <section class="panel" id="panel-students">
+      <div class="card">
+        <div class="section-title" style="margin-top:0;">Add a student</div>
+        <label for="newStudentName">Name</label>
+        <input type="text" id="newStudentName" placeholder="Full name">
+        <label for="newStudentGroup" style="margin-top:10px;">Class / group (optional)</label>
+        <input type="text" id="newStudentGroup" placeholder="e.g. Room 12">
+        <button class="primary" id="addStudentBtn" type="button" style="margin-top:12px;">Add Student</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title" style="margin-top:0;">Add a list at once</div>
+        <label for="bulkAddArea">One student per line — optionally add a group after a comma</label>
+        <textarea id="bulkAddArea" rows="5" placeholder="Jane Smith, Room 12
+John Doe, Room 12
+Alex Lee"></textarea>
+        <button class="primary" id="bulkAddBtn" type="button" style="margin-top:10px;">Add List</button>
+        <div id="bulkAddSummary" style="font-size:0.84rem;color:#5b6b63;margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <label for="rosterFilter">Search students</label>
+        <input type="search" id="rosterFilter" placeholder="Filter by name or group…">
+        <div style="overflow-x:auto;margin-top:12px;">
+          <table id="rosterTable">
+            <thead><tr><th>Name</th><th>Group</th><th>Borrowed</th><th>Not Returned</th><th>Not Signed Out</th><th></th></tr></thead>
+            <tbody id="rosterTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="text-align:center;">
+        <button class="danger" id="resetDataBtn" type="button">Reset all saved data</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">This tool's data is shared with everyone who opens it — built for the whole school to use together.</footer>
+</div>
+
+<script>
+(function(){
+  const SHARED = true;
+  let roster = [];
+  let loans = [];
+  let incidents = [];
+  let selectedStudent = null;
+  let expandedIds = new Set();
+
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function todayStr(){
+    const d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function formatTime(iso){
+    if(!iso) return '';
+    return new Date(iso).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+  }
+  function formatDate(dateStr){
+    const [y,m,d] = dateStr.split('-').map(Number);
+    return new Date(y, m-1, d).toLocaleDateString([], {month:'short', day:'numeric'});
+  }
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function emptyStateHtml(label, text){
+    return '<div class="empty-state"><span class="empty-stamp">'+escapeHtml(label)+'</span><div>'+escapeHtml(text)+'</div></div>';
+  }
+
+  async function safeGet(key, fallback){
+    try{
+      const res = await window.storage.get(key, SHARED);
+      if(res && res.value){ return JSON.parse(res.value); }
+      return fallback;
+    }catch(e){ return fallback; }
+  }
+  async function persist(key, value){
+    try{
+      const res = await window.storage.set(key, JSON.stringify(value), SHARED);
+      if(!res){ throw new Error('no result'); }
+    }catch(e){
+      console.error('Save failed for', key, e);
+      alert('Could not save changes — please check your connection and try again.');
+    }
+  }
+  const saveRoster = () => persist('roster', roster);
+  const saveLoans = () => persist('loans', loans);
+  const saveIncidents = () => persist('incidents', incidents);
+
+  async function loadData(){
+    roster = await safeGet('roster', []);
+    loans = await safeGet('loans', []);
+    incidents = await safeGet('incidents', []);
+  }
+
+  // ---------- TABS ----------
+  function setupTabs(){
+    $$('.tab-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        $$('.tab-btn').forEach(b=>b.classList.remove('active'));
+        $$('.panel').forEach(p=>p.classList.remove('active'));
+        btn.classList.add('active');
+        $('#panel-'+btn.dataset.tab).classList.add('active');
+        if(btn.dataset.tab==='checkout'){ renderCheckoutFeed(); $('#studentSearch').focus(); }
+        if(btn.dataset.tab==='checkin'){ renderCheckinFeed(); $('#returnScan').focus(); }
+        if(btn.dataset.tab==='report'){ renderReport(); }
+        if(btn.dataset.tab==='students'){ renderRoster(); }
+      });
+    });
+  }
+
+  // ---------- STATS ----------
+  function pill(num, rest, warn){
+    return '<span class="stat-pill'+(warn?' warn':'')+'"><b>'+num+'</b> '+rest+'</span>';
+  }
+  function renderStats(){
+    const today = todayStr();
+    const outNow = loans.filter(l=>!l.returned).length;
+    const overdue = loans.filter(l=>!l.returned && l.dateStr!==today).length;
+    const el = $('#statsRow');
+    el.innerHTML = pill(roster.length, roster.length===1?'student':'students')
+      + pill(outNow, 'out right now');
+    if(overdue>0){ el.innerHTML += pill(overdue, 'overdue from before', true); }
+  }
+
+  // ---------- CHECK OUT ----------
+  function setupCheckout(){
+    const search = $('#studentSearch');
+    search.addEventListener('input', ()=>{
+      const q = search.value.trim().toLowerCase();
+      const results = $('#studentResults');
+      results.innerHTML = '';
+      if(!q) return;
+      const matches = roster.filter(s=>s.name.toLowerCase().includes(q)).slice(0,8);
+      if(matches.length===0){
+        results.innerHTML = '<div style="font-size:0.85rem;color:#5b6b63;padding:6px 2px;">No students match. Add them in the Students tab.</div>';
+        return;
+      }
+      matches.forEach(s=>{
+        const btn = document.createElement('button');
+        btn.type='button';
+        btn.className='result-item';
+        btn.innerHTML = '<strong>'+escapeHtml(s.name)+'</strong>'+(s.group?' <span style="color:#7c8a82;">· '+escapeHtml(s.group)+'</span>':'');
+        btn.addEventListener('click', ()=>selectStudent(s));
+        results.appendChild(btn);
+      });
+    });
+
+    $('#changeStudentBtn').addEventListener('click', ()=>{
+      selectedStudent = null;
+      $('#selectedStudentBlock').style.display='none';
+      search.value='';
+      search.focus();
+    });
+
+    $('#reasonSelect').addEventListener('change', ()=>{
+      $('#otherReasonInput').style.display = $('#reasonSelect').value==='other' ? 'block' : 'none';
+    });
+
+    $('#deviceInput').addEventListener('keydown', (e)=>{
+      if(e.key==='Enter'){ e.preventDefault(); submitCheckout(); }
+    });
+    $('#confirmCheckoutBtn').addEventListener('click', submitCheckout);
+  }
+
+  function selectStudent(s){
+    selectedStudent = s;
+    $('#studentResults').innerHTML='';
+    $('#studentSearch').value='';
+    $('#selectedStudentName').textContent = s.name + (s.group ? ' · '+s.group : '');
+    $('#selectedStudentBlock').style.display='block';
+    const open = loans.find(l=>l.studentId===s.id && !l.returned);
+    const warnBox = $('#alreadyOutWarning');
+    if(open){
+      warnBox.style.display='block';
+      warnBox.textContent = s.name+' already has "'+open.device+'" checked out since '+formatTime(open.checkoutTime)+' on '+formatDate(open.dateStr)+'. You can still check out another device below.';
+    } else {
+      warnBox.style.display='none';
+    }
+    $('#deviceInput').value='';
+    $('#reasonSelect').value='Forgot own device';
+    $('#otherReasonInput').style.display='none';
+    $('#deviceInput').focus();
+  }
+
+  function buildCheckoutCardHtml(l, animate){
+    const stampClass = l.returned ? 'in' : 'out';
+    const animClass = animate ? ' animate' : '';
+    return '<div class="stamp '+stampClass+animClass+'">'+(l.returned?'Returned':'Out')+'</div>'
+      + '<div class="name">'+escapeHtml(l.studentName)+'</div>'
+      + '<div class="meta">'+escapeHtml(l.device)+' · '+escapeHtml(l.reason)+' · since '+formatTime(l.checkoutTime)+'</div>';
+  }
+
+  async function submitCheckout(){
+    if(!selectedStudent) return;
+    const deviceInputEl = $('#deviceInput');
+    const device = deviceInputEl.value.trim();
+    if(!device){ deviceInputEl.focus(); return; }
+    let reason = $('#reasonSelect').value;
+    if(reason==='other'){ reason = $('#otherReasonInput').value.trim() || 'Other'; }
+    const loan = {
+      id: uid(), studentId: selectedStudent.id, studentName: selectedStudent.name,
+      device, reason, dateStr: todayStr(), checkoutTime: new Date().toISOString(),
+      returned: false, returnTime: null
+    };
+    loans.push(loan);
+    await saveLoans();
+    renderStats();
+    const feed = $('#checkoutFeed');
+    if(feed.querySelector('.empty-state')) feed.innerHTML='';
+    const card = document.createElement('div');
+    card.className='feed-card';
+    card.innerHTML = buildCheckoutCardHtml(loan, true);
+    feed.prepend(card);
+    selectedStudent = null;
+    $('#selectedStudentBlock').style.display='none';
+    $('#studentSearch').value='';
+    $('#studentSearch').focus();
+  }
+
+  function renderCheckoutFeed(){
+    const today = todayStr();
+    const todays = loans.filter(l=>l.dateStr===today).sort((a,b)=> new Date(b.checkoutTime)-new Date(a.checkoutTime));
+    const feed = $('#checkoutFeed');
+    feed.innerHTML='';
+    if(todays.length===0){ feed.innerHTML = emptyStateHtml('Quiet so far','No devices checked out yet today.'); return; }
+    todays.forEach(l=>{
+      const card = document.createElement('div');
+      card.className='feed-card';
+      card.innerHTML = buildCheckoutCardHtml(l,false);
+      feed.appendChild(card);
+    });
+  }
+
+  // ---------- CHECK IN ----------
+  function setupCheckin(){
+    $('#returnScan').addEventListener('keydown', (e)=>{
+      if(e.key==='Enter'){ e.preventDefault(); submitReturn(); }
+    });
+    $('#confirmReturnBtn').addEventListener('click', submitReturn);
+  }
+
+  function buildCheckinCardHtml(l, animate){
+    const animClass = animate ? ' animate' : '';
+    return '<div class="stamp in'+animClass+'">Returned</div>'
+      + '<div class="name">'+escapeHtml(l.studentName)+'</div>'
+      + '<div class="meta">'+escapeHtml(l.device)+' · returned '+formatTime(l.returnTime)+'</div>';
+  }
+
+  async function submitReturn(){
+    const input = $('#returnScan');
+    const val = input.value.trim();
+    if(!val) return;
+    const candidates = loans.filter(l=>!l.returned && l.device.trim().toLowerCase()===val.toLowerCase())
+      .sort((a,b)=> new Date(b.checkoutTime)-new Date(a.checkoutTime));
+    const feed = $('#checkinFeed');
+    if(feed.querySelector('.empty-state')) feed.innerHTML='';
+    const card = document.createElement('div');
+    card.className='feed-card';
+    if(candidates.length){
+      const loan = candidates[0];
+      loan.returned = true;
+      loan.returnTime = new Date().toISOString();
+      await saveLoans();
+      card.innerHTML = buildCheckinCardHtml(loan, true);
+    } else {
+      card.innerHTML = '<div class="stamp warn animate">No Match</div>'
+        + '<div class="name">"'+escapeHtml(val)+'"</div>'
+        + '<div class="meta">No open checkout found for this device. Double-check the ID and try again.</div>';
+    }
+    feed.prepend(card);
+    renderStats();
+    input.value='';
+    input.focus();
+  }
+
+  function renderCheckinFeed(){
+    const today = todayStr();
+    const todays = loans.filter(l=>l.returned && l.returnTime && l.returnTime.slice(0,10)===today)
+      .sort((a,b)=> new Date(b.returnTime)-new Date(a.returnTime));
+    const feed = $('#checkinFeed');
+    feed.innerHTML='';
+    if(todays.length===0){ feed.innerHTML = emptyStateHtml('Nothing yet','No devices checked in today so far.'); return; }
+    todays.forEach(l=>{
+      const card = document.createElement('div');
+      card.className='feed-card';
+      card.innerHTML = buildCheckinCardHtml(l,false);
+      feed.appendChild(card);
+    });
+  }
+
+  // ---------- REPORT ----------
+  function renderReport(){
+    const today = todayStr();
+    const notReturnedToday = loans.filter(l=>l.dateStr===today && !l.returned)
+      .sort((a,b)=> new Date(a.checkoutTime)-new Date(b.checkoutTime));
+    const stillOutOlder = loans.filter(l=>l.dateStr!==today && !l.returned)
+      .sort((a,b)=> new Date(a.checkoutTime)-new Date(b.checkoutTime));
+    let html = '<div class="section-title" style="margin-top:0;">Not returned today ('+formatDate(today)+')</div>';
+    if(notReturnedToday.length===0){
+      html += '<div class="card">'+emptyStateHtml('All clear','Every device checked out today has been returned.')+'</div>';
+    } else {
+      html += '<div class="card"><table><thead><tr><th>Student</th><th>Device</th><th>Out since</th><th>Reason</th></tr></thead><tbody>';
+      notReturnedToday.forEach(l=>{
+        html += '<tr><td>'+escapeHtml(l.studentName)+'</td><td>'+escapeHtml(l.device)+'</td><td>'+formatTime(l.checkoutTime)+'</td><td>'+escapeHtml(l.reason)+'</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    if(stillOutOlder.length>0){
+      html += '<div class="section-title">Still out from earlier days</div>';
+      html += '<div class="card"><table><thead><tr><th>Student</th><th>Device</th><th>Checked out</th><th>Reason</th></tr></thead><tbody>';
+      stillOutOlder.forEach(l=>{
+        html += '<tr><td>'+escapeHtml(l.studentName)+'</td><td>'+escapeHtml(l.device)+'</td><td>'+formatDate(l.dateStr)+' '+formatTime(l.checkoutTime)+'</td><td>'+escapeHtml(l.reason)+'</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    $('#reportContent').innerHTML = html;
+  }
+
+  // ---------- STUDENTS ----------
+  function setupStudents(){
+    $('#addStudentBtn').addEventListener('click', async ()=>{
+      const nameInput = $('#newStudentName');
+      const groupInput = $('#newStudentGroup');
+      const name = nameInput.value.trim();
+      if(!name){ nameInput.focus(); return; }
+      const group = groupInput.value.trim();
+      const dup = roster.find(s=>s.name.toLowerCase()===name.toLowerCase() && (s.group||'').toLowerCase()===group.toLowerCase());
+      if(dup){ alert(name+' is already on the roster.'); return; }
+      roster.push({id:uid(), name, group});
+      await saveRoster();
+      nameInput.value=''; groupInput.value='';
+      renderStats();
+      renderRoster();
+      nameInput.focus();
+    });
+
+    $('#bulkAddBtn').addEventListener('click', async ()=>{
+      const area = $('#bulkAddArea');
+      const lines = area.value.split('\n').map(l=>l.trim()).filter(Boolean);
+      let added=0, skipped=0;
+      lines.forEach(line=>{
+        const parts = line.split(',');
+        const name = (parts[0]||'').trim();
+        const group = (parts[1]||'').trim();
+        if(!name) return;
+        const dup = roster.find(s=>s.name.toLowerCase()===name.toLowerCase() && (s.group||'').toLowerCase()===group.toLowerCase());
+        if(dup){ skipped++; return; }
+        roster.push({id:uid(), name, group});
+        added++;
+      });
+      if(added>0){ await saveRoster(); }
+      $('#bulkAddSummary').textContent = 'Added '+added+' student'+(added===1?'':'s')+(skipped?', skipped '+skipped+' already on the list.':'.');
+      area.value='';
+      renderStats();
+      renderRoster();
+    });
+
+    $('#rosterFilter').addEventListener('input', renderRoster);
+
+    $('#resetDataBtn').addEventListener('click', async ()=>{
+      if(!confirm('This permanently deletes every student, checkout record, and incident saved in this tool, for everyone. Continue?')) return;
+      if(!confirm('Are you absolutely sure? This cannot be undone.')) return;
+      try{
+        await window.storage.delete('roster', SHARED);
+        await window.storage.delete('loans', SHARED);
+        await window.storage.delete('incidents', SHARED);
+      }catch(e){}
+      roster=[]; loans=[]; incidents=[]; expandedIds = new Set();
+      renderStats(); renderRoster(); renderCheckoutFeed(); renderCheckinFeed(); renderReport();
+    });
+  }
+
+  function renderRoster(){
+    const q = $('#rosterFilter').value.trim().toLowerCase();
+    const tbody = $('#rosterTbody');
+    tbody.innerHTML='';
+    const list = roster
+      .filter(s=> !q || s.name.toLowerCase().includes(q) || (s.group||'').toLowerCase().includes(q))
+      .sort((a,b)=>a.name.localeCompare(b.name));
+    if(list.length===0){
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#7c8a82;padding:18px;">No students match yet.</td></tr>';
+      return;
+    }
+    const today = todayStr();
+    list.forEach(s=>{
+      const borrowed = loans.filter(l=>l.studentId===s.id).length;
+      const notReturned = loans.filter(l=>l.studentId===s.id && !l.returned && l.dateStr!==today).length;
+      const notSignedOut = incidents.filter(i=>i.studentId===s.id).length;
+      const row = document.createElement('tr');
+      row.innerHTML = '<td>'+escapeHtml(s.name)+'</td><td>'+escapeHtml(s.group||'—')+'</td><td>'+borrowed+'</td><td>'+notReturned+'</td><td>'+notSignedOut+'</td>'
+        + '<td><button class="link expand-btn" data-id="'+s.id+'" type="button">Details</button></td>';
+      tbody.appendChild(row);
+
+      if(expandedIds.has(s.id)){
+        const exp = document.createElement('tr');
+        exp.className='expanded-row';
+        const history = loans.filter(l=>l.studentId===s.id).sort((a,b)=> new Date(b.checkoutTime)-new Date(a.checkoutTime)).slice(0,10);
+        const incs = incidents.filter(i=>i.studentId===s.id).sort((a,b)=> new Date(b.time)-new Date(a.time));
+        let inner = '<div style="font-size:0.85rem;">';
+        inner += '<strong>Recent checkouts</strong><br>';
+        inner += history.length ? history.map(l=> formatDate(l.dateStr)+': '+escapeHtml(l.device)+' — '+escapeHtml(l.reason)+(l.returned?' (returned '+formatTime(l.returnTime)+')':' (not yet returned)')).join('<br>') : 'None yet.';
+        inner += '<br><br><strong>Not-signed-out incidents</strong><br>';
+        inner += incs.length ? incs.map(i=> formatDate(i.dateStr)+': '+escapeHtml(i.note||'No note')).join('<br>') : 'None logged.';
+        inner += '<br><br><button class="secondary log-incident-btn" data-id="'+s.id+'" type="button">Log not-signed-out incident</button> '
+          + '<button class="danger delete-student-btn" data-id="'+s.id+'" type="button" style="margin-left:8px;">Remove student</button>';
+        inner += '</div>';
+        exp.innerHTML = '<td colspan="6">'+inner+'</td>';
+        tbody.appendChild(exp);
+      }
+    });
+
+    $$('.expand-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.dataset.id;
+        if(expandedIds.has(id)) expandedIds.delete(id); else expandedIds.add(id);
+        renderRoster();
+      });
+    });
+    $$('.log-incident-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        const s = roster.find(r=>r.id===id);
+        const note = prompt('Quick note about what happened (optional):','Took a device without signing it out');
+        if(note===null) return;
+        incidents.push({id:uid(), studentId:id, studentName:s.name, note, dateStr: todayStr(), time: new Date().toISOString()});
+        await saveIncidents();
+        renderRoster();
+      });
+    });
+    $$('.delete-student-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.id;
+        const s = roster.find(r=>r.id===id);
+        if(!confirm('Remove '+s.name+' from the roster? Their history is kept, but they will stop appearing on the list.')) return;
+        roster = roster.filter(r=>r.id!==id);
+        expandedIds.delete(id);
+        await saveRoster();
+        renderStats();
+        renderRoster();
+      });
+    });
+  }
+
+  // ---------- INIT ----------
+  async function init(){
+    setupTabs();
+    setupCheckout();
+    setupCheckin();
+    setupStudents();
+    await loadData();
+    $('#loadingNote').style.display='none';
+    renderStats();
+    renderCheckoutFeed();
+    renderCheckinFeed();
+    renderReport();
+    renderRoster();
+    $('#studentSearch').focus();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
